@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JD Music - Premium Streaming</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Music Player Specific Styles */
+        .music-player-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        
+        .now-playing {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .album-art-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .album-art-large {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .album-art-large img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .song-info {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+        }
+        
+        .song-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .song-artists {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .song-description {
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .divider {
+            border: none;
+            height: 1px;
+            background-color: rgba(255,255,255,0.1);
+            margin: 20px 0;
+        }
+        
+        .playlist-section {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+        }
+        
+        .playlist-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .playlist-items {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .playlist-item:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+        
+        .playlist-item.active {
+            background-color: rgba(29, 185, 84, 0.1);
+        }
+        
+        .playlist-item-art {
+            width: 50px;
+            height: 50px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .playlist-item-art img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .playlist-item-info {
+            flex: 1;
+        }
+        
+        .playlist-item-info h4 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        
+        .playlist-item-info p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .playlist-item-duration {
+            color: var(--text-secondary);
+        }
+        
+        /* Player Controls */
+        .music-player-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--dark-color);
+            padding: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .player-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 25%;
+            padding-left: 20px;
+        }
+        
+        .player-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 50%;
+        }
+        
+        .player-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+            width: 25%;
+            padding-right: 20px;
+        }
+        
+        .album-art {
+            width: 50px;
+            height: 50px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .album-art img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .track-info h4 {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+        
+        .track-info p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+        
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .control-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .control-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .control-btn.active {
+            color: var(--primary-color);
+        }
+        
+        .play-btn {
+            background-color: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .progress-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+            width: 0%;
+        }
+        
+        .progress-thumb {
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .progress-bar:hover .progress-thumb {
+            opacity: 1;
+        }
+        
+        .time-display {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 40px;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 120px;
+        }
+        
+        .volume-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 4px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .volume-slider:hover::-webkit-slider-thumb {
+            opacity: 1;
+        }
+        /* Lyrics Section Styles */
+        .lyrics-section {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+        }
+
+        .lyrics-section h4 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .lyrics-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+            line-height: 1.8;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .lyrics-container p {
+            margin-bottom: 15px;
+        }
+
+        /* Scrollbar styling */
+        .lyrics-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lyrics-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        .lyrics-container::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .now-playing {
+                grid-template-columns: 1fr;
+            }
+            
+            .album-art-large {
+                max-width: 300px;
+                margin: 0 auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .music-player-container {
+                padding: 15px;
+            }
+            
+            .song-info, .playlist-section {
+                padding: 20px;
+            }
+            
+            .song-title {
+                font-size: 2rem;
+            }
+            
+            .player-left {
+                width: 40%;
+            }
+            
+            .player-center {
+                width: 60%;
+            }
+            
+            .player-right {
+                display: none;
+            }
+            
+            .track-info h4, .track-info p {
+                max-width: 100px;
+            }
+            
+            /* Mobile bottom nav adjustments */
+            .mobile-bottom-nav {
+                bottom: 80px !important;
+            }
+            
+            .music-player-controls {
+                height: 80px;
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
+            .main-content {
+                padding-bottom: 160px;
+            }
+            .lyrics-container {
+                max-height: 200px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .song-title {
+                font-size: 1.8rem;
+            }
+            
+            .song-artists {
+                font-size: 1rem;
+            }
+            
+            .player-left {
+                width: 50%;
+            }
+            
+            .player-center {
+                width: 50%;
+            }
+            
+            .control-buttons {
+                gap: 10px;
+            }
+            
+            .progress-container {
+                display: none;
+            }
+            
+            .mobile-bottom-nav {
+                bottom: 70px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar (Same as JD Films) -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">JD<span>FILMS</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="#">Movies</a>
+                <a href="music.html" class="active">Music</a>
+                <a href="#">Podcasts</a>
+                <a href="#">Shows</a>
+                <a href="#">Artists</a>
+                <button class="btn login-btn">Sign In</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <a href="index.html" class="logo">JD<span>FILMS</span></a>
+        <button class="theme-toggle"><i class="fas fa-moon"></i></button>
+    </div>
+    
+    <!-- Music Player Content -->
+    <div class="main-content">
+        <div class="music-player-container">
+            <div class="now-playing">
+                <div class="album-art-container">
+                    <div class="album-art-large">
+                        <img id="mainAlbumArt" src="" alt="Album Art">
+                    </div>
+                </div>
+                
+                <div class="song-info">
+                    <h1 class="song-title" id="mainSongTitle">Song Name</h1>
+                    <p class="song-artists" id="mainSongArtists">Artist Name</p>
+                    
+                    <div class="song-description" id="songDescription">
+                        <h4>About This Song</h4>
+                        <p id="songAboutText">Loading song information...</p>
+    
+                        <div class="lyrics-section">
+                            <h4>Lyrics</h4>
+                            <div class="lyrics-container" id="songLyrics">
+                                <!-- Lyrics will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="playlist-section">
+                <h3>Playlist</h3>
+                <div class="playlist-items" id="playlistContainer">
+                    <!-- Playlist items will be loaded by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Player Controls -->
+    <div class="music-player-controls">
+        <div class="player-left">
+            <div class="album-art">
+                <img id="playerAlbumArt" src="" alt="Album Art">
+            </div>
+            <div class="track-info">
+                <h4 id="playerSongTitle">Song Name</h4>
+                <p id="playerSongArtist">Artist Name</p>
+            </div>
+        </div>
+        
+        <div class="player-center">
+            <div class="control-buttons">
+                <button class="control-btn shuffle-btn" id="shuffleBtn"><i class="fas fa-random"></i></button>
+                <button class="control-btn prev-btn" id="prevBtn"><i class="fas fa-step-backward"></i></button>
+                <button class="play-btn" id="playBtn"><i class="fas fa-play" id="playIcon"></i></button>
+                <button class="control-btn next-btn" id="nextBtn"><i class="fas fa-step-forward"></i></button>
+                <button class="control-btn repeat-btn" id="repeatBtn"><i class="fas fa-redo"></i></button>
+            </div>
+            
+            <div class="progress-container">
+                <span class="time-display" id="currentTime">0:00</span>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress" id="progress"></div>
+                    <div class="progress-thumb"></div>
+                </div>
+                <span class="time-display" id="duration">0:00</span>
+            </div>
+        </div>
+        
+        <div class="player-right">
+            <div class="volume-control">
+                <i class="fas fa-volume-up"></i>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer (Same as JD Films) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Cookie Preferences</a></li>
+                        <li><a href="#">Corporate Information</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Connect With Us</h4>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 JD FILMS. Sri Lanka. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-film"></i>
+            <span>Movies</span>
+        </a>
+        <a href="music.html" class="mobile-nav-item active">
+            <i class="fas fa-music"></i>
+            <span>Music</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-podcast"></i>
+            <span>Podcasts</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-user"></i>
+            <span>Account</span>
+        </a>
+    </div>
+    <script src="js/script.js"></script>
+    <script>
+        // music library with lyrics
+        const musicLibrary = [
+        {
+            id: 1,
+            title: "Galana Ganga (ගලන ගඟ )",
+            artist: "Charitha Attalage",
+            artists: ["Ravi jay", "Charitha Attalage"],
+            album: "Kuweni by Charitha Attalage",
+            albumArt: "https://i.scdn.co/image/ab67616d00001e0226cd3dd142fec7b6922c780d",
+            duration: "3:08",
+            audioSrc: "https://jhmusicstudio.online/GalanaGanga.mp3",
+            description: "“Galana Ganga” is a dynamic hip‑hop duet by Charitha Attalage, featuring Ravi Jay, released in November 2017. The song blends Charitha's melodic vocals and production with Ravi's rap verses, and features crisp electric guitar from Alex Gradwohl. The official music video, directed by Ravi Jay, adds a cinematic vibe to the track.",
+            lyrics: [
+                "Charitha:-",
+                "නීල දෑස හා දොඩවන්නම්",
+                "වළලු හඬට මම මත් වෙන්නම්",
+                "නීල වරල මා සිඹ ගන්නම්",
+                "හීන මවා මට කතා කරන්",
+                "  -  ",
+                "ගලන ගඟක රළ වාගේ",
+                "නිමාවක් නෑ නේ",
+                "ඔබෙ රූ වරුනේ",
+                "ක්ෂිතිජයක ඉමක් ගානේ",
+                "නිමාවක් නෑ නේ",
+                "ඔබෙ රූ වරුනේ",
+                "  -  ",
+                "ලෞකික සැප",
+                "කාලය කාදැමීමක් නිබ්බාණෙට පිවිසෙන්න",
+                "පංචස්කන්ධයක අස්ථිර ගතිය මෙනෙහි මෙනෙහි",
+                "මං තපසෙක්ම විය නුඹ දකින්න පෙර",
+                "ඔයාගෙ ළපටි තඹර දෙකොපුල",
+                "තුහින වැටි දිළිසෙයි ඝණ අඳුර මත",
+                "ඇසට නොපෙනෙන පර්වතෙක සුන්දර බව විඳපු මට",
+                "ඔයාගෙ රුව දැක බිඳුනා මගෙ සමවැදි",
+                "සිටි දැහැන මෙතුකලක් කැළඹිලා",
+                "සම්මාදිට්ඨිය මගෙ අද නතරවෙලා",
+                "ඔයාගෙ නෙතුමුල, මගෙ හේතුඵල",
+                "ගොළුවෙලා අන්ධව අතර මග කිමද",
+                "ඝන්ධකුටියෙන් හිමිට බැස සීලය පසෙක දමා",
+                "විදනසින් වැද රූපයක සොබා",
+                "එතෙර වෙන්න මං ගිය සසර මග පෙරට",
+                "ඔයා ඇවිත් අද තෘෂ්ණාවක් වෙලා",
+                "  -  ",
+                "නීල දෑස හා දොඩවන්නම්",
+                "වළලු හඬට මම මත් වෙන්නම්",
+                "නීල වරල මා සිඹ ගන්නම්",
+                "හීන මවා මට කතා කරන්",
+                "  -  ",
+                "ගලන ගඟක රළ වාගේ",
+                "නිමාවක් නෑ නේ",
+                "ඔබෙ රූ වරුනේ",
+                "ක්ෂිතිජයක ඉමක් ගානේ",
+                "නිමාවක් නෑ නේ",
+                "ඔබෙ රූ වරුනේ"
+            ]
+        },
+        {
+            id: 2,
+            title: "Duwe (දුවේ) - Charitha Attalage",
+            artist: "Charitha Attalage",
+            artists: ["Charitha Attalage", "Chandrasena Thalangama", "Dilru Amarasinghe"],
+            album: "Kuweni by Charitha Attalage",
+            albumArt: "https://s.mxmcdn.net/images-storage/albums5/8/8/5/9/6/1/57169588_350_350.jpg",
+            duration: "4.29",
+            audioSrc: "https://jhmusicstudio.online/Duwe.mp3",
+            description: "Duwe by Charitha Attalage conveys a sense of longing and emotional depth, using metaphors of shadows and light to explore the complexities of love and separation.",
+            lyrics: [
+                "දේස දීපංකරේOoh",
+                "පේන තෙක් මානයේ",
+                "වාලුකාවේ දැවී",
+                "කාසි හොයනා නගේ",
+                "  -  ",
+                "පුංචි පැටවු නුඹේ",
+                "නැද්ද සිහිපත් උනේ",
+                "උන්ට උඹමයි අගේ",
+                "කාසි පොදි නම් නොවේ",
+                "  -  ",
+                "සමාවෙයන් දුවේ",
+                "සමාවෙයන් දුවේ",
+                "මින් මතුවට වෙන්නැතේ",
+                "  -  ",
+                "සමාවෙයන් දුවේ",
+                "සමාවෙයන් දුවේ",
+                "මින් මතුවට වෙන්නැතේ",
+                "  -  ",
+                "රෑට තුරුලේ උඹේ",
+                "නින්ද ගිය හා පැටවු",
+                "මට බයේ හැංගිලා",
+                "නිදි වරා සෝ දුකින්",
+                "  -  ",
+                "පොඩි එවුන්ගෙ දමා",
+                "උන්ගෙ අප්පත් මෙදා",
+                "රහමෙරේ කිමිදිලා",
+                "උන්ට අතවර කලා",
+                "  -  ",
+                "පුංචි පැටවු නුඹේ",
+                "නැද්ද සිහිපත් උනේ",
+                "උන්ට උඹමයි අගේ",
+                "කාසි පොදි නම් නොවේ",
+                "  -  ",
+                "සමාවෙයන් දුවේ",
+                "සමාවෙයන් දුවේ",
+                "මින් මතුවට වෙන්නැතේ",
+                "  -  "
+            ]
+        },
+        {
+            id: 3,
+            title: "Kuweni (කුවේණී)",
+            artist: "Ridma Weerawardena",
+            artists: ["Charitha Attalage", "Chandrasena Thalangama", "Dinupa Kodagoda"],
+            album: "",
+            albumArt: "https://i.scdn.co/image/ab67616d0000b273993bf4ab4e11fb56c19ce6fa",
+            duration: "4.33",
+            audioSrc: "https://jhmusicstudio.online/Kuweni.mp3",
+            description: "This expressive music video features “Kuweni (කුවේණී)”, a collaborative track by Sri Lankan singer Ridma Weerawardena featuring Dinupa Kodagoda and Charitha Attalage. Released about 7½ years ago, it draws from folklore-inspired themes and emotive vocals.",
+            lyrics: [
+                "කුවේණියේ මා, කුවේණියේ මම",
+                "තම්මැන්නා එනවා",
+                "රූබරියේ මා, රූබරියේ මම",
+                "ආලේ සොයා එනවා",
+                "සළුව අරන් ගෙට පලයන් කුමරිය",
+                "නැවක නැගී මරු එනවා කුමරිය",
+                "  -  ",
+                "කුවේණියේ මා, කුවේණියේ මම",
+                "තම්මැන්නා එනවා",
+                "රූබරියේ මා, රූබරියේ මම",
+                "ආලේ සොයා එනවා",
+                "  -  ",
+                "වියූ සළුව නොම හැරයන් කුවේණියේ",
+                "ලාට රටින් දොස් පැවරෙයි කුවේණියේ",
+                "කිලිටි දෙපා මඩ තවරයි කුවේණියේ",
+                "වැස්ස වැටී තෙත තැවරෙයි කුවේණියේ",
+                "  -  ",
+                "නිරිඳුන් නුඹේ ආලේ නිසා",
+                "බෝ විපතක් වෙනා, නොවඩින් සදා",
+                "මතු භවයේ මා හමුවන තුරා",
+                "ආලය පසෙක ලා හිඳිමි මෙමා",
+                "  -  ",
+                "සළුව අරන් ගෙට පලයන් කුමරිය",
+                "නැවක නැගී මරු එනවා කුමරිය",
+                "  -  ",
+                "කුවේණියේ මා, කුවේණියේ මම",
+                "තම්මැන්නා එනවා",
+                "රූබරියේ මා, රූබරියේ මම",
+                "ආලේ සොයා එනවා",
+                "  -  ",
+                "නිරිඳුන් නුඹේ ආලේ නිසා",
+                "බෝ විපතක් වෙනා, නොවඩින් සදා",
+                "මතු භවයේ මා හමුවන තුරා",
+                "ආලය පසෙක ලා හිඳිමි මෙමා"
+            ]
+        },
+        {
+            id: 4,
+            title: "සකුරා | Sakura by Charitha Attalage ft. Manasick",
+            artist: "Charitha Attalage",
+            artists: ["Charitha Attalage", "Manasick", "Hasanka Wickramarathna"],
+            album: "Kuweni by Charitha Attalage",
+            albumArt: "https://s.mxmcdn.net/images-storage/albums5/4/2/0/1/0/4/52401024_500_500.jpg",
+            duration: "4.55",
+            audioSrc: "https://jhmusicstudio.online/Sakura.mp3",
+            description: "This is “Sakura (feat. Manasick)”, a collaborative song by renowned Sri Lankan musician Charitha Attalage and rapper/producer Manasick, released around 4½ years ago.",
+            lyrics: [
+                "සකුරා මලේ", 
+                "අද මා ලග හඩා වැටී",  
+                "සකුරා මලේ",
+                "වෙනදා මෙන් සුවද නැතේ",  
+
+                "හිමි නොවෙනා ප්‍රේමේ", 
+                "ලුහු බදිනා ප්‍රේමේ",  
+
+                "සකුරා මලේ -අද මා ලග හඩා වැටී",  
+                "  -  ",
+                "පරසතු සුවදක්",  
+                "මම නොම වින්දෙමි",  
+                "සකුරා යායේ",
+
+                "පරසතු කුසුමක්",  
+                "මම නොම වින්දෙමි",  
+                "සකුරා යායේ",  
+
+                "සකුරා පෙති ගිලිහෙන",  
+                "මහා කහට",  
+                "මම දැන් වින්දේ",  
+
+                "සකුරා මලේ",  
+                "පෙති ගිලිහී හඩා වැටේ",  
+                "  -  ",
+                "කදුලු පිලියමක්",  
+                "නුඹට වියැකෙන හල් මිටි",  
+                "සමාජේ අනියම දායි",  
+                "නුඹගේ කර පිටින්",  
+
+                "සිනමා හිරේ",  
+                "අපගේ යතාර්ථයක්",  
+                "කනපිටින්",  
+                "පදාර්ථයේ පිටපතක්",  
+                "කුසේ උබේ පනපිටින්",  
+                "  -  ",
+                "යදින්නෙපා",  
+                "විද සිදලන්න බැරි දොලදුකක්",  
+
+                "උඹේ කාලේ පාරේ",  
+                "උඹේ භාර්‍යාව ගැරහුවත්",  
+
+                "මගේ රහසක",  
+                "රිදී නිම්නයක",  
+                "කලබල නියන්පත්",  
+                "කිනම් ඩිම්බයක",  
+                "  -  ",
+                "ගිනි තියන් උබේ",  
+                "නෙගටිව් පටි",  
+                "ඔය හැසිරීම",  
+                "මට ගබ්සා දොරටු අරී",  
+
+                "වීරයන්ට දැන්",  
+                "උඹේ ආතමාර්තකාමි",  
+                "වග නොකියන්න ජාතකේට",  
+                "මා ප්‍රාර්ථනාවී" , 
+                "  -  ",
+                "තිබුනට කඩතුරා",  
+                "ගැබක් උඹ දාරාගෙන",  
+
+                "උඹේ පරාජය",  
+                "ලතවෙන්නෙ ලය පලාගෙන",  
+                "වෛයිරය වේද" , 
+                "මහ මතකයන් පලා යන",  
+                "දෙන්න මට සැලොන" , 
+                "සිහිනෙට මගේ පලා යන්න",  
+                "  -  ",
+                "හිමි නොවෙනා ප්‍රේමේ" , 
+                "ලුහු බදිනා ප්‍රේමේ",  
+
+                "සකුරා පෙති ගිලිහෙන" , 
+                "මහා කහට"  ,
+                "මම දැන් වින්දේ",  
+
+                "සකුරා මලේ",  
+                "අද මා ලග හඩා වැටී" , 
+
+                "සකුරා මලේ" , 
+                "පෙති ගිලිහී හඩා වැටේ" , 
+
+                "සකුරා මලේ" , 
+                "පෙති ගිලිහී හඩා වැටේ" , 
+                "  -  ",
+                "නිබද දෙව් දූ"  ,
+                "සියත වලා බැමි"  ,
+                "මුහුරස උර දැක්මේ කඩා වැටී" , 
+                "මා දළු රෝස පලයට"  ,
+                "හඩා වැටී" , 
+                "පුරා සකුරා සිසිරේ"  ,
+                "පතනවා ඇති"  ,
+                "  -  ",
+                "චරිත"  ,
+                "මානසික්" , 
+                "වෙස්ට්නාහිර",
+            ]
+        },
+        {
+            id: 5,
+            title: "Soya Awa | Ridma Weerawardena",
+            artist: "Ridma Weerawardena",
+            artists: ["Ridma Weerawardena", "Chandrasena Thalangama", "Charitha Attalage"],
+            album: "",
+            albumArt: "https://s.mxmcdn.net/images-storage/albums5/7/9/1/1/9/1/39191197_350_350.jpg",
+            duration: "3.50",
+            audioSrc: "https://jhmusicstudio.online/SoyaAwa.mp3",
+            description: "Duwe by Charitha Attalage conveys a sense of longing and emotional depth, using metaphors of shadows and light to explore the complexities of love and separation.",
+            lyrics: [
+                "සදා කාලේ මා, හදේ වීනා",
+                "මවා පෑ සිනා",
+                "මගේ හීනේ මා, සොයා ආවා",
+                "පැතූ සේ එදා",
+                "  -  ",
+                "කොයිද උපමා, ලොවේ කිසිදා",
+                "අසා නෑ මා",
+                "හදේ ඇඳුනා, හිතේ රැඳුනා",
+                "ඔබේ රුව මා",
+                "  -  ",
+                "මගේ ගීතේ මා, එදා කීවා",
+                "හදේ පෑරෙනා",
+                "ඔබේ දෑසේ ගී පොතේ වූ වා",
+                "මගේ චේතනා",
+                "  -  ",
+                "ඇයි ද ගොලු වී, බලා නොබලා",
+                "සිනා පානා",
+                "සොයා ආවා, සොයා ආවා",
+                "එදා මෙන් මා",
+                "  -  ",
+                "දෑසේ ලා සඳ රේඛා",
+                "සිසිලේ නෑ වේවා",
+                "මුහුනේ ගෑ ආලෙපේ",
+                "සොඳුරේ මා වේවා",
+                "ඉතිරේවා, සැමදා සෙනේ",
+                "මා පැතුවා හදින්, සමාවී අසන්",
+                "අඳුරේ මා නොහෙලා ඉතින්",
+                "සිනා පා ඉඳින්, සදා මා ළඟින්",
+                "  -  ",
+                "මගේ ගීතේ මා, එදා කීවා",
+                "හදේ පෑරෙනා",
+                "ඔබේ දෑසේ ගී පොතේ වූ වා",
+                "මගේ චේතනා",
+                "  -  ",
+                "ඇයි ද ගොලු වී, බලා නොබලා",
+                "සිනා පානා",
+                "සොයා ආවා, සොයා ආවා"
+            ]
+        },
+        
+    ];
+
+        // DOM Elements
+        const audio = new Audio();
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        
+        // Info Elements
+        const mainAlbumArt = document.getElementById('mainAlbumArt');
+        const mainSongTitle = document.getElementById('mainSongTitle');
+        const mainSongArtists = document.getElementById('mainSongArtists');
+        const songDescription = document.getElementById('songDescription');
+        const playerAlbumArt = document.getElementById('playerAlbumArt');
+        const playerSongTitle = document.getElementById('playerSongTitle');
+        const playerSongArtist = document.getElementById('playerSongArtist');
+        const playlistContainer = document.getElementById('playlistContainer');
+        
+        // Player State
+        let isPlaying = false;
+        let currentTrackIndex = 0;
+        let isShuffle = false;
+        let isRepeat = false;
+        let isSeeking = false;
+        
+        // Initialize Player
+        function initPlayer() {
+            renderPlaylist();
+            loadTrack(currentTrackIndex);
+            
+            // Event Listeners
+            playBtn.addEventListener('click', togglePlay);
+            prevBtn.addEventListener('click', prevTrack);
+            nextBtn.addEventListener('click', nextTrack);
+            progressBar.addEventListener('click', seek);
+            progressBar.addEventListener('mousedown', () => isSeeking = true);
+            document.addEventListener('mouseup', () => isSeeking = false);
+            progressBar.addEventListener('mousemove', (e) => isSeeking && seek(e));
+            volumeSlider.addEventListener('input', setVolume);
+            shuffleBtn.addEventListener('click', toggleShuffle);
+            repeatBtn.addEventListener('click', toggleRepeat);
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', handleTrackEnd);
+            audio.addEventListener('loadedmetadata', updateDuration);
+        }
+        
+        // Render Playlist
+        function renderPlaylist() {
+            playlistContainer.innerHTML = '';
+            
+            musicLibrary.forEach((track, index) => {
+                const playlistItem = document.createElement('div');
+                playlistItem.className = 'playlist-item';
+                playlistItem.innerHTML = `
+                    <div class="playlist-item-art">
+                        <img src="${track.albumArt}" alt="${track.album}">
+                    </div>
+                    <div class="playlist-item-info">
+                        <h4>${track.title}</h4>
+                        <p>${track.artist}</p>
+                    </div>
+                    <div class="playlist-item-duration">${track.duration}</div>
+                `;
+                
+                playlistItem.addEventListener('click', () => {
+                    currentTrackIndex = index;
+                    loadTrack(currentTrackIndex);
+                    playTrack();
+                    updateActivePlaylistItem();
+                });
+                
+                playlistContainer.appendChild(playlistItem);
+            });
+            
+            updateActivePlaylistItem();
+        }
+        
+        // Update Active Playlist Item
+        function updateActivePlaylistItem() {
+            document.querySelectorAll('.playlist-item').forEach((item, index) => {
+                if (index === currentTrackIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        // Load Track
+        function loadTrack(index) {
+            const track = musicLibrary[index];
+            
+            // Update Audio
+            audio.src = track.audioSrc;
+            
+            // Update Main Display
+            mainAlbumArt.src = track.albumArt;
+            mainSongTitle.textContent = track.title;
+            mainSongArtists.innerHTML = track.artists.join('<br>');
+            songDescription.textContent = track.description;
+            
+            // Update Player Controls
+            playerAlbumArt.src = track.albumArt;
+            playerSongTitle.textContent = track.title;
+            playerSongArtist.textContent = track.artist;
+            
+            // Update Duration
+            if (isPlaying) {
+                audio.play().catch(e => console.log("Auto-play prevented:", e));
+            }
+        }
+        
+        // Play Track
+        function playTrack() {
+            isPlaying = true;
+            playIcon.classList.replace('fa-play', 'fa-pause');
+            audio.play();
+        }
+        
+        // Pause Track
+        function pauseTrack() {
+            isPlaying = false;
+            playIcon.classList.replace('fa-pause', 'fa-play');
+            audio.pause();
+        }
+        
+        // Toggle Play/Pause
+        function togglePlay() {
+            if (isPlaying) {
+                pauseTrack();
+            } else {
+                playTrack();
+            }
+        }
+        
+        // Previous Track
+        function prevTrack() {
+            currentTrackIndex--;
+            if (currentTrackIndex < 0) {
+                currentTrackIndex = musicLibrary.length - 1;
+            }
+            loadTrack(currentTrackIndex);
+            if (isPlaying) {
+                playTrack();
+            }
+            updateActivePlaylistItem();
+        }
+        
+        // Next Track
+        function nextTrack() {
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * musicLibrary.length);
+            } else {
+                currentTrackIndex++;
+                if (currentTrackIndex >= musicLibrary.length) {
+                    currentTrackIndex = 0;
+                }
+            }
+            loadTrack(currentTrackIndex);
+            if (isPlaying) {
+                playTrack();
+            }
+            updateActivePlaylistItem();
+        }
+        
+        // Handle Track End
+        function handleTrackEnd() {
+            if (isRepeat) {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                nextTrack();
+            }
+        }
+        
+        // Update Progress
+        function updateProgress() {
+            if (isSeeking) return;
+            
+            const { currentTime, duration } = audio;
+            const progressPercent = (currentTime / duration) * 100;
+            progress.style.width = `${progressPercent}%`;
+            currentTimeEl.textContent = formatTime(currentTime);
+        }
+        
+        // Seek
+        function seek(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            audio.currentTime = (clickX / width) * duration;
+        }
+        
+        // Update Duration
+        function updateDuration() {
+            durationEl.textContent = formatTime(audio.duration);
+        }
+        
+        // Format Time
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+        
+        // Set Volume
+        function setVolume() {
+            audio.volume = volumeSlider.value / 100;
+        }
+        
+        // Toggle Shuffle
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            shuffleBtn.classList.toggle('active', isShuffle);
+        }
+        
+        // Toggle Repeat
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            repeatBtn.classList.toggle('active', isRepeat);
+        }
+        
+        // Initialize the player
+        initPlayer();
+        
+        // Mobile view adjustments
+        function handleMobileLayout() {
+            const isMobile = window.innerWidth <= 768;
+            const playerControls = document.querySelector('.music-player-controls');
+            const mainContent = document.querySelector('.main-content');
+            const mobileNav = document.querySelector('.mobile-bottom-nav');
+            
+            if (isMobile) {
+                playerControls.style.height = '80px';
+                playerControls.style.paddingBottom = 'env(safe-area-inset-bottom)';
+                mainContent.style.paddingBottom = '160px';
+                if (mobileNav) mobileNav.style.bottom = '80px';
+            } else {
+                playerControls.style.height = '';
+                playerControls.style.paddingBottom = '';
+                mainContent.style.paddingBottom = '';
+                if (mobileNav) mobileNav.style.bottom = '';
+            }
+        }
+        
+        // Run on load and resize
+        handleMobileLayout();
+        window.addEventListener('resize', handleMobileLayout);
+
+        // Updated loadTrack function
+        function loadTrack(index) {
+            const track = musicLibrary[index];
+    
+            // Update Audio
+            audio.src = track.audioSrc;
+    
+            // Update Main Display
+            mainAlbumArt.src = track.albumArt;
+            mainSongTitle.textContent = track.title;
+            mainSongArtists.innerHTML = track.artists.join('<br>');
+            document.getElementById('songAboutText').textContent = track.description;
+    
+            // Update Lyrics
+            const lyricsContainer = document.getElementById('songLyrics');
+            lyricsContainer.innerHTML = '';
+    
+            if (track.lyrics && track.lyrics.length > 0) {
+                track.lyrics.forEach(line => {
+                const p = document.createElement('p');
+                p.textContent = line || ' '; // Empty line for spacing
+                lyricsContainer.appendChild(p);
+            });
+            } else {
+                lyricsContainer.innerHTML = '<p>Lyrics not available for this track.</p>';
+            }
+    
+            // Update Player Controls
+                playerAlbumArt.src = track.albumArt;
+                playerSongTitle.textContent = track.title;
+                playerSongArtist.textContent = track.artist;
+    
+            // Update Duration
+            if (isPlaying) {
+                audio.play().catch(e => console.log("Auto-play prevented:", e));
+            }
+        }
+    </script>
+</body>
+</html>
