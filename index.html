@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JD FILMS - Premium Streaming Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional styles for the pre-order section */
+        .coming-soon-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .coming-soon {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg') no-repeat center center/cover;
+            color: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo-container {
+            margin-bottom: 40px;
+            max-width: 400px;
+        }
+        
+        .logo-container img {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(229, 9, 20, 0.5));
+        }
+        
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .countdown-item {
+            background: rgba(229, 9, 20, 0.2);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 80px;
+        }
+        
+        .countdown-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .countdown-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--secondary-color);
+        }
+        
+        .preorder-form {
+            max-width: 500px;
+            width: 100%;
+            margin-top: 40px;
+        }
+        
+        .preorder-benefits {
+            margin: 40px 0;
+            text-align: left;
+            max-width: 600px;
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .benefit-item i {
+            color: var(--primary-color);
+            margin-right: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .iframe-container {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 80px);
+            position: relative;
+        }
+        
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Adjust navbar position when iframe is active */
+        .iframe-active .navbar {
+            position: relative;
+            background-color: var(--bg-color) !important;
+        }
+
+        /* Hide elements when iframe is active */
+        .iframe-active .coming-soon,
+        .iframe-active .mobile-bottom-nav,
+        .iframe-active .footer {
+            display: none !important;
+        }
+
+        /* Ensure mobile header is visible when needed */
+        .iframe-active .mobile-header {
+            display: block;
+            background: var(--bg-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Desktop Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">JD<span>FILMS</span></a>
+            <div class="nav-links">
+                <a href="#" class="active">Home</a>
+                <a href="#">Coming Soon</a>
+                <a href="#">Pre-Order</a>
+                <a href="#">About</a>
+                <a href="sign-in.html"><button class="btn login-btn">Sign In</button></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <a href="#" class="logo">JD<span>FILMS</span></a>
+        <button class="theme-toggle"><i class="fas fa-moon"></i></button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="coming-soon-container">
+        <!-- Coming Soon Section -->
+        <section class="coming-soon" id="coming-soon">
+            <div class="logo-container">
+                <img src="https://jdentertainments.netlify.app/JD%20Fims%20Logo.png" alt="JD FILMS Logo" onerror="this.src='https://via.placeholder.com/400x200?text=JD+FILMS+Logo'">
+            </div>
+            
+            <h1>COMING SOON</h1>
+            <p>Premium streaming experience is on its way</p>
+            
+            <div class="countdown">
+                <div class="countdown-item">
+                    <div class="countdown-number" id="days">00</div>
+                    <div class="countdown-label">Days</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-number" id="hours">00</div>
+                    <div class="countdown-label">Hours</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-number" id="minutes">00</div>
+                    <div class="countdown-label">Minutes</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-number" id="seconds">00</div>
+                    <div class="countdown-label">Seconds</div>
+                </div>
+            </div>
+            
+            <div class="preorder-benefits">
+                <h3>Pre-order now and get:</h3>
+                <div class="benefit-item">
+                    <i class="fas fa-star"></i>
+                    <span>Exclusive early access to our content library</span>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-percentage"></i>
+                    <span>20% discount for the first 3 months</span>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-gem"></i>
+                    <span>Premium member badge on your profile</span>
+                </div>
+                <div class="benefit-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Free access to exclusive premieres</span>
+                </div>
+            </div>
+            
+            <div class="preorder-form">
+                <h3>Be the first to experience JD FILMS</h3>
+                <div class="email-signup">
+                    <input type="email" placeholder="Email address" id="preorder-email">
+                    <button class="btn" onclick="preorderNow()">Pre-Order Now <i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- This will be shown after launch -->
+    <div class="iframe-container" id="main-content">
+        <!-- The iframe will be inserted here by JavaScript -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Cookie Preferences</a></li>
+                        <li><a href="#">Corporate Information</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Connect With Us</h4>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 JD FILMS. Sri Lanka. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#coming-soon" class="mobile-nav-item">
+            <i class="fas fa-clock"></i>
+            <span>Coming Soon</span>
+        </a>
+        <a href="#preorder" class="mobile-nav-item">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Pre-Order</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-info-circle"></i>
+            <span>About</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-user"></i>
+            <span>Account</span>
+        </a>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Countdown timer - set your launch date here
+        const launchDate = new Date('2025-11-10T00:00:00').getTime();
+        
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = launchDate - now;
+            
+            // If launch date has passed, show the iframe
+            if (distance <= 0) {
+                activateIframe();
+                return;
+            }
+            
+            // Calculate days, hours, minutes, seconds
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            // Display the result
+            document.getElementById('days').innerHTML = days.toString().padStart(2, '0');
+            document.getElementById('hours').innerHTML = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').innerHTML = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').innerHTML = seconds.toString().padStart(2, '0');
+        }
+        
+        function activateIframe() {
+            document.body.classList.add('iframe-active');
+            const iframeContainer = document.getElementById('main-content');
+            iframeContainer.style.display = 'block';
+            
+            // Create iframe if it doesn't exist
+            if (!iframeContainer.querySelector('iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.src = 'home.html';
+                iframeContainer.appendChild(iframe);
+            }
+        }
+        
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // Initial call
+        
+        function preorderNow() {
+            const email = document.getElementById('preorder-email').value;
+            if (email && email.includes('@')) {
+                localStorage.setItem('preorderEmail', email);
+                alert('Thank you for your pre-order! We will contact you when JD FILMS launches.');
+                document.getElementById('preorder-email').value = '';
+            } else {
+                alert('Please enter a valid email address');
+                document.getElementById('preorder-email').focus();
+            }
+        }
+        
+        // Check if we should show the iframe immediately (for testing)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('debug')) {
+            activateIframe();
+        }
+
+        // Fallback for logo image
+        document.addEventListener('DOMContentLoaded', function() {
+            const logo = document.querySelector('.logo-container img');
+            logo.onerror = function() {
+                this.src = 'https://via.placeholder.com/400x200?text=JD+FILMS+Logo';
+            };
+        });
+    </script>
+</body>
+</html>
