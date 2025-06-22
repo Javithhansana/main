@@ -1,0 +1,2667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Now Playing - JD FILMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        :root {
+            --primary-color: #e50914;
+            --dark-color: #141414;
+            --light-color: #f4f4f4;
+            --sidebar-width: 400px;
+            --player-top-margin: 100px;
+            --card-bg: rgba(255,255,255,0.05);
+            --text-secondary: #aaa;
+            --scrollbar-thumb: #555;
+            --scrollbar-track: #222;
+        }
+
+        [data-theme="light"] {
+            --card-bg: rgba(0,0,0,0.05);
+            --text-secondary: #555;
+            --scrollbar-thumb: #ccc;
+            --scrollbar-track: #f1f1f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
+            z-index: 1000;
+            background: linear-gradient(to bottom, var(--nav-bg) 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .mobile-header {
+            display: none;
+        }
+
+        .player-container {
+            position: relative;
+            width: 100%;
+            min-height: calc(12vh - var(--player-top-margin));
+            margin-top: var(--player-top-margin);
+            background-color: var(--bg-color);
+            margin-bottom: 0;
+        }
+
+        .movie-title {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            z-index: 10;
+            max-width: 80%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .video-wrapper {
+            flex: 1;
+            position: relative;
+            width: 100%;
+        }
+
+        .video-container {
+            width: 100%;
+            height: 56.25vw;
+            max-height: 60vh;
+            background-color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            touch-action: manipulation;
+        }
+
+        #videoPlayer {
+            width: 100%;
+            height: 100%;
+            display: none;
+            outline: none;
+        }
+
+        /* Caption Styles */
+        .caption-container {
+            position: absolute;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 9;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+        }
+
+        .caption-text {
+            display: inline-block;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            max-width: 80%;
+            line-height: 1.4;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        /* Desktop Controls */
+        .desktop-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 15px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-container:hover .desktop-controls {
+            opacity: 1;
+        }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            color: white;
+            flex-direction: column;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-controls.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background-color: rgba(255,255,255,0.2);
+            margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            border-radius: 2px;
+        }
+
+        /* Chapter markers */
+        .chapter-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: rgba(255,255,255,0.5);
+            z-index: 2;
+        }
+
+        .chapter-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+        .chapter-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px;
+            border-style: solid;
+            border-color: rgba(0,0,0,0.9) transparent transparent transparent;
+        }
+
+        .chapter-marker:hover .chapter-tooltip {
+            display: block;
+        }
+
+        /* Progress Bar Chapter Markers */
+        .chapter-marker {
+            position: absolute;
+            top: -3px;
+            height: 10px;
+            width: 3px;
+            background-color: white;
+            z-index: 2;
+            transform: translateX(-50%);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chapter-marker:hover {
+            height: 14px;
+            top: -5px;
+            width: 4px;
+            background-color: var(--primary-color);
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .left-controls, .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 5px;
+            touch-action: manipulation;
+        }
+
+        .play-btn {
+            background-color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Volume Controls */
+        .volume-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .volume-slider-container {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            width: 80px;
+        }
+
+        .volume-container:hover .volume-slider-container {
+            display: block;
+        }
+
+        .volume-slider {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* Enhanced Speed and Quality Selectors */
+        .speed-selector, .quality-selector, .caption-selector {
+            position: relative;
+            display: inline-block;
+        }
+
+        .speed-btn, .quality-btn, .caption-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-width: 50px;
+            text-align: center;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .speed-btn:hover, .quality-btn:hover, .caption-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .speed-btn i, .quality-btn i, .caption-btn i {
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
+
+        .speed-options, .quality-options, .caption-options {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 6px;
+            display: none;
+            min-width: 120px;
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .quality-options, .caption-options {
+            left: auto;
+            right: 0;
+            transform: none;
+        }
+
+        .speed-option, .quality-option, .caption-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .speed-option:hover, .quality-option:hover, .caption-option:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .speed-option.active, .quality-option.active, .caption-option.active {
+            color: var(--primary-color);
+            background-color: rgba(229, 9, 20, 0.1);
+        }
+
+        .speed-option.active::after, .quality-option.active::after, .caption-option.active::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-left: 10px;
+            font-size: 0.8rem;
+        }
+
+        .speed-selector:hover .speed-options, 
+        .quality-selector:hover .quality-options,
+        .caption-selector:hover .caption-options {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .quality-options, .caption-options {
+            animation: fadeInRight 0.2s ease-out;
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Loop button */
+        .loop-btn {
+            position: relative;
+        }
+
+        .loop-btn.active {
+            color: var(--primary-color);
+        }
+
+        .loop-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 5px;
+            right: 5px;
+            height: 2px;
+            background-color: var(--primary-color);
+            border-radius: 1px;
+        }
+
+        /* Video Info Section */
+        .video-info {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .video-creator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .creator-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+
+        .creator-info {
+            flex: 1;
+        }
+
+        .creator-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .creator-subscribers {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .subscribe-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .video-description {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .video-description h3 {
+            margin-bottom: 10px;
+        }
+
+        .video-description p {
+            line-height: 1.5;
+        }
+
+        /* Chapters Section */
+        .chapters-container {
+            margin: 30px 0;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chapters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chapters-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .chapters-title i {
+            margin-right: 12px;
+            color: var(--primary-color);
+            font-size: 1.6rem;
+        }
+        .chapter-count {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-left: 12px;
+        }
+        .chapters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .chapter-card {
+             position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 16/9;
+            background-color: var(--dark-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .chapter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .chapter-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .chapter-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .chapter-card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 15px;
+        }
+
+        .chapter-card:hover .chapter-card-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .chapter-card-content {
+            transform: translateY(10px);
+            transition: transform 0.3s ease;
+            opacity: 0.9;
+        }
+
+        .chapter-card-title {
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chapter-card-time {
+            display: inline-block;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .chapter-card-duration {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 400px;
+            background-color: var(--bg-color);
+            padding: 20px;
+            overflow-y: auto;
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            padding-top: 60px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+            display: block;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .sidebar h3 {
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .movie-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .movie-card {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 16/9;
+            background-color: var(--card-bg);
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.03);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+        }
+
+        .movie-card-title {
+            color: var(--text-color);
+            font-weight: bold;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-card-duration {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Trending Section */
+        .trending-section {
+            padding: 20px;
+            background-color: var(--bg-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        .trending-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: var(--text-color);
+            position: relative;
+            display: inline-block;
+        }
+
+        .trending-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--primary-color);
+        }
+
+        .trending-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .trending-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            background-color: var(--card-bg);
+        }
+
+        .trending-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .trending-item img {
+            width: 100%;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .trending-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            padding: 15px;
+            color: white;
+        }
+
+        .trending-title {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            color: gold;
+            font-size: 0.9rem;
+        }
+
+        .rating span {
+            margin-left: 5px;
+            color: white;
+        }
+
+        /* Fullscreen */
+        .player-container.fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            z-index: 9999;
+            background: #000;
+        }
+
+        .player-container.fullscreen .sidebar {
+            display: none !important;
+        }
+
+        .player-container.fullscreen .video-container {
+            height: 100vh !important;
+            max-height: none !important;
+        }
+
+        .player-container.fullscreen .desktop-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .player-container.fullscreen .mobile-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+        }
+
+        /* Sidebar Toggle */
+        .sidebar-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1002;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: none;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* Main content layout */
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .player-section {
+            flex: 1;
+            min-width: 0;
+            padding-right: 20px;
+        }
+
+        .sidebar-section {
+            width: 400px;
+            padding-left: 20px;
+        }
+
+        /* Mobile Portrait Styles */
+        @media (max-width: 768px) {
+            .navbar {
+                display: none;
+            }
+            
+            .mobile-header {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                padding: 15px 20px;
+                background-color: var(--bg-color);
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .desktop-controls {
+                display: none;
+            }
+            
+            .mobile-controls {
+                display: none;
+            }
+            
+            .play-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+            }
+            
+            .sidebar-toggle {
+                display: none;
+            }
+
+            .theme-toggle {
+                bottom: 140px;
+                right: 20px;
+                z-index: 1001;
+            }
+
+            .video-container {
+                max-height: 50vh;
+            }
+
+            /* Hide sidebar in mobile view */
+            .sidebar {
+                display: none !important;
+            }
+            
+            .sidebar-section {
+                display: none;
+            }
+
+            .player-container {
+                margin-top: 60px;
+            }
+
+            .main-content {
+                flex-direction: column;
+                padding: 0;
+            }
+
+            .player-section {
+                width: 100%;
+                padding: 0;
+            }
+
+            /* Adjust video info section for mobile */
+            .video-info {
+                padding: 15px;
+            }
+
+            .video-creator {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .creator-avatar {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .chapters-container {
+                padding: 15px;
+                border-radius: 0;
+                margin-left: -15px;
+                margin-right: -15px;
+                box-shadow: none;
+            }
+
+            .chapters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
+
+            .chapter-card-overlay {
+                padding: 10px;
+            }
+
+            .chapter-card-title {
+                font-size: 0.9rem;
+            }
+
+            .caption-text {
+                font-size: 0.9rem;
+                padding: 6px 12px;
+            }
+            .caption-container {
+                bottom: 0px; /* Adjust this value as needed */
+                padding-bottom: 20px; /* Add some padding if needed */
+            }
+        .speed-selector:hover .speed-options,
+        .quality-selector:hover .quality-options,
+        .caption-selector:hover .caption-options {
+            display: none;
+        }
+        
+        .speed-selector.active .speed-options,
+        .quality-selector.active .quality-options,
+        .caption-selector.active .caption-options {
+            display: block;
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10010;
+        }
+        
+        .quality-selector.active .quality-options,
+        .caption-selector.active .caption-options {
+            left: auto;
+            right: 10px;
+            transform: none;
+        }
+        
+        .speed-option, .quality-option, .caption-option {
+            padding: 12px 15px;
+            font-size: 1rem;
+        }
+        }
+
+        /* Mobile Landscape Styles */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .mobile-bottom-nav {
+                display: none;
+            }
+            
+            .mobile-header {
+                display: none;
+            }
+            
+            .navbar {
+                display: flex;
+            }
+            
+            .player-container {
+                margin-top: 60px;
+            }
+            
+            .content-wrapper {
+                flex-direction: row;
+            }
+            
+            .video-wrapper {
+                width: 70%;
+            }
+            
+            .sidebar {
+                width: 30%;
+                display: block !important;
+                position: relative;
+                transform: none !important;
+                padding-top: 0;
+                box-shadow: none;
+                background-color: var(--bg-color);
+            }
+            
+            .sidebar-overlay {
+                display: none !important;
+            }
+            
+            .sidebar-toggle {
+                display: none !important;
+            }
+            
+            .video-container {
+                max-height: none;
+                height: calc(100vh - 60px);
+            }
+            
+            .mobile-controls {
+                display: none !important;
+            }
+            
+            .desktop-controls {
+                display: flex !important;
+            }
+            
+            .close-sidebar {
+                display: none !important;
+            }
+            
+            .caption-container {
+                bottom: 0px; /* Different position for landscape */
+            }
+            
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 992px) {
+            .content-wrapper {
+                flex-direction: row;
+            }
+            
+            .sidebar {
+                display: block;
+                position: sticky;
+                top: calc(60px + var(--player-top-margin));
+                height: calc(100vh - 60px - var(--player-top-margin));
+                width: var(--sidebar-width);
+                transform: none;
+                background-color: var(--bg-color);
+            }
+            
+            .video-wrapper {
+                width: calc(100% - var(--sidebar-width));
+            }
+            
+            .sidebar-toggle {
+                display: none;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+            }
+
+            .close-sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Desktop Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">JD<span>FILMS</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="#" class="active">Movies</a>
+                <a href="#">Music</a>
+                <a href="#">Podcasts</a>
+                <a href="#">Shows</a>
+                <a href="#">Artists</a>
+                <button class="btn login-btn">Sign In</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <a href="index.html" class="logo">JD<span>FILMS</span></a>
+        <button class="theme-toggle"><i class="fas fa-moon"></i></button>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Player Section -->
+        <div class="player-section">
+            <!-- Player Container -->
+            <div class="player-container" id="playerContainer">
+                <div class="movie-title" id="currentMovieTitle">Big Buck Bunny</div>
+                
+                <div class="content-wrapper">
+                    <div class="video-wrapper">
+                        <div class="video-container">
+                            <video id="videoPlayer"></video>
+                            <!-- Caption Container -->
+                            <div class="caption-container" id="captionContainer">
+                                <div class="caption-text" id="captionText"></div>
+                            </div>
+                            <div class="video-placeholder" id="videoPlaceholder">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            
+                            <!-- Desktop Controls -->
+                            <div class="desktop-controls">
+                                <div class="progress-container" id="progressContainer">
+                                    <div class="progress-bar" id="progressBar"></div>
+                                    <!-- Chapter markers will be added here by JavaScript -->
+                                </div>
+                                
+                                <div class="time-display">
+                                    <span id="currentTime">0:00</span>
+                                    <span id="duration">0:00</span>
+                                </div>
+                                
+                                <div class="control-buttons">
+                                    <div class="left-controls">
+                                        <button class="control-btn play-btn" id="playBtn"><i class="fas fa-play"></i></button>
+                                        <div class="volume-container">
+                                            <button class="control-btn" id="volumeBtn"><i class="fas fa-volume-up"></i></button>
+                                            <div class="volume-slider-container" id="volumeSliderContainer">
+                                                <input type="range" min="0" max="1" step="0.01" value="1" class="volume-slider" id="volumeSlider">
+                                            </div>
+                                        </div>
+                                        <div class="speed-selector">
+                                            <button class="speed-btn" id="speedBtn">1x</button>
+                                            <div class="speed-options" id="speedOptions">
+                                                <div class="speed-option" data-speed="0.5">0.5x</div>
+                                                <div class="speed-option" data-speed="0.75">0.75x</div>
+                                                <div class="speed-option active" data-speed="1">1x (Normal)</div>
+                                                <div class="speed-option" data-speed="1.25">1.25x</div>
+                                                <div class="speed-option" data-speed="1.5">1.5x</div>
+                                                <div class="speed-option" data-speed="2">2x</div>
+                                            </div>
+                                        </div>
+                                        <button class="control-btn loop-btn" id="loopBtn" title="Loop"><i class="fas fa-redo"></i></button>
+                                    </div>
+                                    
+                                    <div class="right-controls">
+                                        <div class="caption-selector">
+                                            <button class="caption-btn" id="captionBtn"><i class="fas fa-closed-captioning"></i></button>
+                                            <div class="caption-options" id="captionOptions">
+                                                <div class="caption-option" data-caption="off">Off</div>
+                                                <div class="caption-option active" data-caption="english">English</div>
+                                                <div class="caption-option" data-caption="spanish">Spanish</div>
+                                                <div class="caption-option" data-caption="french">French</div>
+                                            </div>
+                                        </div>
+                                        <div class="quality-selector">
+                                            <button class="quality-btn" id="qualityBtn">Auto</button>
+                                            <div class="quality-options" id="qualityOptions">
+                                                <div class="quality-option" data-quality="auto">Auto</div>
+                                                <div class="quality-option" data-quality="144">144p</div>
+                                                <div class="quality-option" data-quality="240">240p</div>
+                                                <div class="quality-option" data-quality="360">360p</div>
+                                                <div class="quality-option" data-quality="480">480p</div>
+                                                <div class="quality-option" data-quality="720">720p HD</div>
+                                                <div class="quality-option" data-quality="1080">1080p Full HD</div>
+                                            </div>
+                                        </div>
+                                        <button class="control-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile Controls -->
+                        <div class="mobile-controls" id="mobileControls">
+                            <div class="progress-container" id="mobileProgressContainer">
+                                <div class="progress-bar" id="mobileProgressBar"></div>
+                            </div>
+                            
+                            <div class="time-display">
+                                <span id="mobileCurrentTime">0:00</span>
+                                <span id="mobileDuration">0:00</span>
+                            </div>
+                            
+                            <div class="control-buttons">
+                                <div class="left-controls">
+                                    <button class="control-btn play-btn" id="mobilePlayBtn"><i class="fas fa-play"></i></button>
+                                    <div class="volume-container">
+                                        <button class="control-btn" id="mobileVolumeBtn"><i class="fas fa-volume-up"></i></button>
+                                        <div class="volume-slider-container" id="mobileVolumeSliderContainer">
+                                            <input type="range" min="0" max="1" step="0.01" value="1" class="volume-slider" id="mobileVolumeSlider">
+                                        </div>
+                                    </div>
+                                    <div class="speed-selector">
+                                        <button class="speed-btn" id="mobileSpeedBtn">1x</button>
+                                        <div class="speed-options" id="mobileSpeedOptions">
+                                            <div class="speed-option" data-speed="0.5">0.5x</div>
+                                            <div class="speed-option" data-speed="0.75">0.75x</div>
+                                            <div class="speed-option active" data-speed="1">1x (Normal)</div>
+                                            <div class="speed-option" data-speed="1.25">1.25x</div>
+                                            <div class="speed-option" data-speed="1.5">1.5x</div>
+                                            <div class="speed-option" data-speed="2">2x</div>
+                                        </div>
+                                    </div>
+                                    <button class="control-btn loop-btn" id="mobileLoopBtn" title="Loop"><i class="fas fa-redo"></i></button>
+                                </div>
+                                
+                                <div class="right-controls">
+                                    <div class="caption-selector">
+                                        <button class="caption-btn" id="mobileCaptionBtn"><i class="fas fa-closed-captioning"></i></button>
+                                        <div class="caption-options" id="mobileCaptionOptions">
+                                            <div class="caption-option" data-caption="off">Off</div>
+                                            <div class="caption-option active" data-caption="english">English</div>
+                                            <div class="caption-option" data-caption="spanish">Spanish</div>
+                                            <div class="caption-option" data-caption="french">French</div>
+                                        </div>
+                                    </div>
+                                    <div class="quality-selector">
+                                        <button class="quality-btn" id="mobileQualityBtn">Auto</button>
+                                        <div class="quality-options" id="mobileQualityOptions">
+                                            <div class="quality-option" data-quality="auto">Auto</div>
+                                            <div class="quality-option" data-quality="144">144p</div>
+                                            <div class="quality-option" data-quality="240">240p</div>
+                                            <div class="quality-option" data-quality="360">360p</div>
+                                            <div class="quality-option" data-quality="480">480p</div>
+                                            <div class="quality-option" data-quality="720">720p HD</div>
+                                            <div class="quality-option" data-quality="1080">1080p Full HD</div>
+                                        </div>
+                                    </div>
+                                    <button class="control-btn" id="mobileFullscreenBtn"><i class="fas fa-expand"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Info Section -->
+            <div class="video-info">
+                <div class="video-creator">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Creator" class="creator-avatar">
+                    <div class="creator-info">
+                        <div class="creator-name">Blender Foundation</div>
+                        <div class="creator-subscribers">1.2M subscribers</div>
+                    </div>
+                    <button class="subscribe-btn">Subscribe</button>
+                </div>
+
+                <div class="video-description">
+                    <h3>About this video</h3>
+                    <p>Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain't no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.</p>
+                </div>
+
+                <!-- Enhanced Chapters Section -->
+                <div class="chapters-container">
+                    <div class="chapters-header">
+                        <h3 class="chapters-title"><i class="fas fa-list-ol"></i> Chapters <span class="chapter-count" id="chapterCount">6 chapters</span></h3>
+                        <div class="chapter-duration">Total: 9:56</div>
+                    </div>
+                    <div class="chapters-grid" id="chaptersGrid">
+                        <!-- Chapters will be added by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trending Section -->
+            <section class="trending-section">
+                <h2>Trending Now</h2>
+                <div class="trending-grid" id="trendingGrid">
+                    <!-- Trending items will be added by JavaScript -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Sidebar Section -->
+        <div class="sidebar-section">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>For You</h3>
+                    <button class="close-sidebar" id="closeSidebar"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="movie-grid" id="movieGrid">
+                    <!-- Movie cards will be added by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-film"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Cookie Preferences</a></li>
+                        <li><a href="#">Corporate Information</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Connect With Us</h4>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 JD FILMS. Sri Lanka. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="mobile-nav-item active">
+            <i class="fas fa-film"></i>
+            <span>Movies</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-music"></i>
+            <span>Music</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-podcast"></i>
+            <span>Podcasts</span>
+        </a>
+        <a href="#" class="mobile-nav-item active">
+            <i class="fas fa-user"></i>
+            <span>Account</span>
+        </a>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script>
+        // Movie data for "For You" section
+        const forYouMovies = [
+            {
+                title: "Big Buck Bunny",
+                duration: "9:56",
+                image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                rating: 4.5,
+                creator: {
+                    name: "Blender Foundation",
+                    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+                    subscribers: "1.2M"
+                },
+                description: "Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain't no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.",
+                captions: {
+                    english: [
+                        { time: 10, text: "Big Buck Bunny wakes up in his rabbit hole." },
+                        { time: 25, text: "He stretches and yawns, ready for a new day." },
+                        { time: 45, text: "The sun is shining brightly in the meadow." },
+                        { time: 70, text: "Three rodents appear, looking mischievous." },
+                        { time: 90, text: "They begin to torment the poor bunny." },
+                        { time: 120, text: "First they throw an acorn at his head." },
+                        { time: 150, text: "Then they trip him as he walks by." },
+                        { time: 180, text: "Big Buck Bunny has had enough!" },
+                        { time: 210, text: "He devises a plan for revenge." },
+                        { time: 240, text: "Using his strength, he builds a trap." },
+                        { time: 270, text: "The rodents fall for it completely." },
+                        { time: 300, text: "They get covered in sticky syrup." },
+                        { time: 330, text: "And feathers stick to them everywhere." },
+                        { time: 360, text: "The tables have turned completely." },
+                        { time: 390, text: "The rodents run away in embarrassment." },
+                        { time: 420, text: "Big Buck Bunny smiles triumphantly." },
+                        { time: 450, text: "Peace returns to the meadow." },
+                        { time: 480, text: "The end." }
+                    ],
+                    spanish: [
+                        { time: 10, text: "Big Buck Bunny se despierta en su madriguera." },
+                        { time: 25, text: "Se estira y bosteza, listo para un nuevo día." },
+                        { time: 45, text: "El sol brilla intensamente en el prado." },
+                        { time: 70, text: "Aparecen tres roedores, luciendo traviesos." },
+                        { time: 90, text: "Comienzan a atormentar al pobre conejo." },
+                        { time: 120, text: "Primero le arrojan una bellota en la cabeza." },
+                        { time: 150, text: "Luego lo hacen tropezar mientras pasa." },
+                        { time: 180, text: "¡Big Buck Bunny ya ha tenido suficiente!" },
+                        { time: 210, text: "Idea un plan para vengarse." },
+                        { time: 240, text: "Usando su fuerza, construye una trampa." },
+                        { time: 270, text: "Los roedores caen completamente en ella." },
+                        { time: 300, text: "Se cubren de jarabe pegajoso." },
+                        { time: 330, text: "Y las plumas se les pegan por todas partes." },
+                        { time: 360, text: "Las tornas han cambiado por completo." },
+                        { time: 390, text: "Los roedores huyen avergonzados." },
+                        { time: 420, text: "Big Buck Bunny sonríe triunfante." },
+                        { time: 450, text: "La paz vuelve al prado." },
+                        { time: 480, text: "Fin." }
+                    ],
+                    french: [
+                        { time: 10, text: "Big Buck Bunny se réveille dans son terrier." },
+                        { time: 25, text: "Il s'étire et baille, prêt pour une nouvelle journée." },
+                        { time: 45, text: "Le soleil brille intensément dans la prairie." },
+                        { time: 70, text: "Trois rongeurs apparaissent, l'air espiègle." },
+                        { time: 90, text: "Ils commencent à tourmenter le pauvre lapin." },
+                        { time: 120, text: "D'abord, ils lui lancent un gland sur la tête." },
+                        { time: 150, text: "Puis ils le font trébucher en passant." },
+                        { time: 180, text: "Big Buck Bunny en a assez !" },
+                        { time: 210, text: "Il élabore un plan pour se venger." },
+                        { time: 240, text: "Utilisant sa force, il construit un piège." },
+                        { time: 270, text: "Les rongeurs tombent complètement dans le panneau." },
+                        { time: 300, text: "Ils se couvrent de sirop collant." },
+                        { time: 330, text: "Et des plumes leur collent partout." },
+                        { time: 360, text: "Les rôles sont complètement inversés." },
+                        { time: 390, text: "Les rongeurs s'enfuient, embarrassés." },
+                        { time: 420, text: "Big Buck Bunny sourit, triomphant." },
+                        { time: 450, text: "La paix revient dans la prairie." },
+                        { time: 480, text: "Fin." }
+                    ]
+                },
+                chapters: [
+                    { time: 0, title: "Introduction", image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png" },
+                    { time: 60, title: "Meet the Bunny", image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png" },
+                    { time: 120, title: "The Rodents Arrive", image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png" },
+                    { time: 180, title: "Conflict Begins", image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png" },
+                    { time: 240, title: "Bunny's Revenge", image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png" },
+                    { time: 300, title: "Happy Ending", image: "https://peach.blender.org/wp-content/uploads/bbb-splash.png" }
+                ]
+            },
+            {
+                title: "Elephant Dream",
+                duration: "10:53",
+                image: "https://imgs.search.brave.com/aZC3rR0b364G-VHZ28pt3Mg8u16L1AhkopznwqCSCao/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvY29tbW9ucy90/aHVtYi8wLzBjL0Vs/ZXBoYW50c0RyZWFt/UG9zdGVyLmpwZy81/MTJweC1FbGVwaGFu/dHNEcmVhbVBvc3Rl/ci5qcGc",
+                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                rating: 4.2,
+                creator: {
+                    name: "Blender Foundation",
+                    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+                    subscribers: "1.2M"
+                },
+                description: "The first Blender Open Movie from 2006. A short story about two strange characters exploring a capricious and seemingly infinite machine.",
+                captions: {
+                    english: [
+                        { time: 15, text: "The machine hums with mysterious energy." },
+                        { time: 30, text: "Two explorers venture into its depths." },
+                        { time: 60, text: "Strange sounds echo through the corridors." },
+                        { time: 90, text: "Lights flicker unpredictably." },
+                        { time: 120, text: "The machine seems alive somehow." },
+                        { time: 150, text: "They discover unusual control panels." },
+                        { time: 180, text: "Buttons press themselves without touch." },
+                        { time: 210, text: "The explorers grow increasingly uneasy." },
+                        { time: 240, text: "The machine responds to their presence." },
+                        { time: 270, text: "Pathways shift and change behind them." },
+                        { time: 300, text: "There's no turning back now." },
+                        { time: 330, text: "The machine reveals its true nature." },
+                        { time: 360, text: "A dream within a machine?" },
+                        { time: 390, text: "Or a machine within a dream?" },
+                        { time: 420, text: "Reality bends and twists." },
+                        { time: 450, text: "The explorers must find their way out." },
+                        { time: 480, text: "If such a way exists..." }
+                    ]
+                },
+                chapters: [
+                    { time: 0, title: "Opening Scene", image: "https://peach.blender.org/wp-content/uploads/ed-splash.png" },
+                    { time: 90, title: "Exploring the Machine", image: "https://peach.blender.org/wp-content/uploads/ed-splash.png" },
+                    { time: 180, title: "Strange Discoveries", image: "https://peach.blender.org/wp-content/uploads/ed-splash.png" },
+                    { time: 270, title: "Climax", image: "https://peach.blender.org/wp-content/uploads/ed-splash.png" },
+                    { time: 360, title: "Conclusion", image: "https://peach.blender.org/wp-content/uploads/ed-splash.png" }
+                ]
+            },
+            {
+                title: "Sintel",
+                duration: "14:48",
+                image: "https://imgs.search.brave.com/GX54yUMbOEwmy0OQcNDfPkw9RPZwQStvTbIRyu7c9wM/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvY29tbW9ucy84/LzhmL1NpbnRlbF9w/b3N0ZXIuanBn",
+                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                rating: 4.7,
+                creator: {
+                    name: "Blender Foundation",
+                    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+                    subscribers: "1.2M"
+                },
+                description: "The third Blender Open Movie from 2010. Sintel is an independently produced short film, initiated by the Blender Foundation as a means to further improve and validate the free/open source 3D creation suite Blender.",
+                captions: {
+                    english: [
+                        { time: 20, text: "Sintel finds a wounded dragon in the snow." },
+                        { time: 45, text: "She names the dragon Scales." },
+                        { time: 80, text: "They form a deep bond as Scales recovers." },
+                        { time: 120, text: "But one day, Scales is taken from her." },
+                        { time: 160, text: "Sintel embarks on a dangerous journey." },
+                        { time: 200, text: "She faces harsh conditions and dangers." },
+                        { time: 240, text: "Her determination never wavers." },
+                        { time: 280, text: "After much searching, she finds Scales." },
+                        { time: 320, text: "But the dragon doesn't recognize her." },
+                        { time: 360, text: "Sintel realizes too much time has passed." },
+                        { time: 400, text: "Dragons live much longer than humans." },
+                        { time: 440, text: "With a heavy heart, she lets Scales go." },
+                        { time: 480, text: "Some bonds are meant to be temporary." },
+                        { time: 520, text: "But the memories last forever." }
+                    ]
+                },
+                chapters: [
+                    { time: 0, title: "The Beginning", image: "https://peach.blender.org/wp-content/uploads/sintel-splash.png" },
+                    { time: 120, title: "Meeting the Dragon", image: "https://peach.blender.org/wp-content/uploads/sintel-splash.png" },
+                    { time: 240, title: "The Journey", image: "https://peach.blender.org/wp-content/uploads/sintel-splash.png" },
+                    { time: 360, title: "The Battle", image: "https://peach.blender.org/wp-content/uploads/sintel-splash.png" },
+                    { time: 480, title: "Final Scene", image: "https://peach.blender.org/wp-content/uploads/sintel-splash.png" }
+                ]
+            }
+        ];
+
+        // Movie data for "Trending" section
+        const trendingMovies = [
+            {
+                title: "Nature Documentary",
+                duration: "22:15",
+                image: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+                rating: 4.9,
+                creator: {
+                    name: "Nature Channel",
+                    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+                    subscribers: "3.5M"
+                },
+                description: "A breathtaking journey through some of the most beautiful natural landscapes on our planet.",
+                captions: {
+                    english: [
+                        { time: 30, text: "The camera pans across a vast mountain range." },
+                        { time: 60, text: "Snow-capped peaks glisten in the morning sun." },
+                        { time: 90, text: "A river carves its way through the valley below." },
+                        { time: 120, text: "Deer graze peacefully in the alpine meadow." },
+                        { time: 180, text: "The forest comes alive with birdsong." },
+                        { time: 240, text: "A bear teaches her cubs to fish in the stream." },
+                        { time: 300, text: "The ocean waves crash against rugged cliffs." },
+                        { time: 360, text: "Dolphins play in the surf at sunset." },
+                        { time: 420, text: "The desert stretches endlessly under the stars." },
+                        { time: 480, text: "Life persists even in the harshest conditions." }
+                    ]
+                },
+                chapters: [
+                    { time: 0, title: "Introduction", image: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 120, title: "Mountains", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 360, title: "Forests", image: "https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 600, title: "Oceans", image: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 900, title: "Deserts", image: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" }
+                ]
+            },
+            {
+                title: "City Life",
+                duration: "18:42",
+                image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+                rating: 4.7,
+                creator: {
+                    name: "Urban Explorer",
+                    avatar: "https://randomuser.me/api/portraits/men/22.jpg",
+                    subscribers: "850K"
+                },
+                description: "A day in the life of a bustling metropolis, capturing the energy and diversity of city living.",
+                captions: {
+                    english: [
+                        { time: 30, text: "The city wakes as the sun rises." },
+                        { time: 60, text: "Commuters rush to their destinations." },
+                        { time: 90, text: "Street vendors set up for the day." },
+                        { time: 120, text: "Construction workers begin their shifts." },
+                        { time: 180, text: "Office workers gather for meetings." },
+                        { time: 240, text: "The lunchtime rush fills restaurants." },
+                        { time: 300, text: "Afternoon shoppers crowd the streets." },
+                        { time: 360, text: "As evening falls, lights illuminate the city." },
+                        { time: 420, text: "Nightlife begins in clubs and bars." },
+                        { time: 480, text: "The city never truly sleeps." }
+                    ]
+                },
+                chapters: [
+                    { time: 0, title: "Morning Rush", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 180, title: "Midday Activities", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 360, title: "Afternoon Scenes", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 540, title: "Evening Lights", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 720, title: "Night Life", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" }
+                ]
+            },
+            {
+                title: "Mountain Adventure",
+                duration: "15:30",
+                image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+                rating: 4.8,
+                creator: {
+                    name: "Adventure Seekers",
+                    avatar: "https://randomuser.me/api/portraits/women/33.jpg",
+                    subscribers: "1.8M"
+                },
+                description: "Join us on an exhilarating mountain climbing expedition with stunning views and challenging terrain.",
+                captions: {
+                    english: [
+                        { time: 30, text: "The team prepares at base camp." },
+                        { time: 60, text: "Checking equipment one last time." },
+                        { time: 90, text: "The ascent begins at dawn." },
+                        { time: 120, text: "Navigating through rocky terrain." },
+                        { time: 180, text: "Securing ropes for the steep climb." },
+                        { time: 240, text: "Taking a break to admire the view." },
+                        { time: 300, text: "The air grows thinner as we climb." },
+                        { time: 360, text: "Final push to the summit." },
+                        { time: 420, text: "Celebrating at the top of the world." },
+                        { time: 480, text: "The descent begins before sunset." }
+                    ]
+                },
+                chapters: [
+                    { time: 0, title: "Base Camp", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 120, title: "First Ascent", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 240, title: "Rock Climbing", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 360, title: "Summit Push", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
+                    { time: 480, title: "Victory at Top", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" }
+                ]
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+    // Player elements
+    const videoPlayer = document.getElementById('videoPlayer');
+    const videoPlaceholder = document.getElementById('videoPlaceholder');
+    const captionContainer = document.getElementById('captionContainer');
+    const captionText = document.getElementById('captionText');
+    
+    // Desktop controls
+    const playBtn = document.getElementById('playBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const volumeBtn = document.getElementById('volumeBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const speedBtn = document.getElementById('speedBtn');
+    const speedOptions = document.querySelectorAll('.speed-option');
+    const captionBtn = document.getElementById('captionBtn');
+    const captionOptions = document.querySelectorAll('.caption-option');
+    const loopBtn = document.getElementById('loopBtn');
+    const qualityBtn = document.getElementById('qualityBtn');
+    const qualityOptions = document.querySelectorAll('.quality-option');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    
+    // Mobile controls
+    const mobilePlayBtn = document.getElementById('mobilePlayBtn');
+    const mobileProgressBar = document.getElementById('mobileProgressBar');
+    const mobileProgressContainer = document.getElementById('mobileProgressContainer');
+    const mobileCurrentTimeEl = document.getElementById('mobileCurrentTime');
+    const mobileDurationEl = document.getElementById('mobileDuration');
+    const mobileVolumeBtn = document.getElementById('mobileVolumeBtn');
+    const mobileVolumeSlider = document.getElementById('mobileVolumeSlider');
+    const mobileSpeedBtn = document.getElementById('mobileSpeedBtn');
+    const mobileSpeedOptions = document.querySelectorAll('#mobileSpeedOptions .speed-option');
+    const mobileCaptionBtn = document.getElementById('mobileCaptionBtn');
+    const mobileCaptionOptions = document.querySelectorAll('#mobileCaptionOptions .caption-option');
+    const mobileLoopBtn = document.getElementById('mobileLoopBtn');
+    const mobileQualityBtn = document.getElementById('mobileQualityBtn');
+    const mobileQualityOptions = document.querySelectorAll('#mobileQualityOptions .quality-option');
+    const mobileFullscreenBtn = document.getElementById('mobileFullscreenBtn');
+    
+    // Common elements
+    const currentMovieTitle = document.getElementById('currentMovieTitle');
+    const movieGrid = document.getElementById('movieGrid');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const playerContainer = document.getElementById('playerContainer');
+    const trendingGrid = document.getElementById('trendingGrid');
+    const videoContainer = document.querySelector('.video-container');
+    const mobileControls = document.getElementById('mobileControls');
+    
+    // Video info elements
+    const chaptersGrid = document.getElementById('chaptersGrid');
+    const creatorAvatar = document.querySelector('.creator-avatar');
+    const creatorName = document.querySelector('.creator-name');
+    const creatorSubscribers = document.querySelector('.creator-subscribers');
+    const videoDescription = document.querySelector('.video-description p');
+    const chapterCount = document.getElementById('chapterCount');
+    
+    // Track if controls should be visible
+    let controlsTimeout;
+    let controlsVisible = false;
+    let currentMovie = null;
+    let qualityIndicatorTimeout;
+    let currentQuality = 'auto';
+    let currentCaption = 'english';
+    let isLooping = false;
+    let currentCaptions = [];
+    let captionTimeout;
+
+    // Initialize movie grid (For You section)
+    function initializeMovieGrid() {
+        movieGrid.innerHTML = '';
+        forYouMovies.forEach(movie => {
+            const movieCard = document.createElement('div');
+            movieCard.className = 'movie-card';
+            movieCard.innerHTML = `
+                <img src="${movie.image}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x169?text=Image+Not+Available'">
+                <div class="movie-card-overlay">
+                    <div class="movie-card-title">${movie.title}</div>
+                    <div class="movie-card-duration">${movie.duration}</div>
+                </div>
+            `;
+            movieCard.addEventListener('click', () => {
+                loadMovie(movie);
+                if (window.innerWidth < 992 && window.matchMedia("(orientation: portrait)").matches) {
+                    toggleSidebar();
+                }
+            });
+            movieGrid.appendChild(movieCard);
+        });
+    }
+    
+    // Initialize trending grid
+    function initializeTrendingGrid() {
+        trendingGrid.innerHTML = '';
+        trendingMovies.forEach(movie => {
+            const trendingItem = document.createElement('div');
+            trendingItem.className = 'trending-item';
+            trendingItem.innerHTML = `
+                <img src="${movie.image}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x169?text=Image+Not+Available'">
+                <div class="trending-overlay">
+                    <div class="trending-title">${movie.title}</div>
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span>${movie.rating}</span>
+                    </div>
+                </div>
+            `;
+            trendingItem.addEventListener('click', () => {
+                loadMovie(movie);
+            });
+            trendingGrid.appendChild(trendingItem);
+        });
+    }
+    
+    // Load movie function
+    function loadMovie(movie) {
+        currentMovie = movie;
+        currentMovieTitle.textContent = movie.title;
+        videoPlaceholder.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('${movie.image}')`;
+        videoPlayer.src = movie.videoUrl;
+        videoPlayer.load();
+        videoPlayer.style.display = 'block';
+        videoPlaceholder.style.display = 'none';
+        videoPlayer.play().catch(e => console.error('Autoplay prevented:', e));
+        updatePlayButtons(true);
+        
+        // Update video info
+        creatorAvatar.src = movie.creator.avatar;
+        creatorName.textContent = movie.creator.name;
+        creatorSubscribers.textContent = movie.creator.subscribers + " subscribers";
+        videoDescription.textContent = movie.description;
+        
+        // Update chapters
+        updateChapters(movie.chapters);
+        
+        // Set up captions
+        if (movie.captions && movie.captions[currentCaption]) {
+            currentCaptions = movie.captions[currentCaption];
+        } else {
+            currentCaptions = [];
+            captionText.textContent = '';
+        }
+        
+        // Show controls when video starts playing
+        if (window.innerWidth < 768) {
+            showMobileControls();
+        }
+    }
+    
+    // Update captions based on current time
+    function updateCaptions(currentTime) {
+        if (!currentCaptions || currentCaptions.length === 0) return;
+        
+        clearTimeout(captionTimeout);
+        
+        // Find the current caption
+        let currentCaption = null;
+        let nextCaptionTime = null;
+        
+        for (let i = 0; i < currentCaptions.length; i++) {
+            if (currentCaptions[i].time <= currentTime) {
+                currentCaption = currentCaptions[i];
+                
+                // Check if there's a next caption to know when to hide this one
+                if (i < currentCaptions.length - 1) {
+                    nextCaptionTime = currentCaptions[i + 1].time;
+                }
+            } else {
+                break;
+            }
+        }
+        
+        // Display the caption
+        if (currentCaption) {
+            captionText.textContent = currentCaption.text;
+            captionContainer.style.opacity = '1';
+            
+            // Hide the caption when the next one should appear or after 3 seconds if it's the last one
+            if (nextCaptionTime) {
+                const displayDuration = nextCaptionTime - currentTime;
+                captionTimeout = setTimeout(() => {
+                    captionContainer.style.opacity = '0';
+                }, displayDuration * 1000);
+            } else {
+                // Last caption - show for 3 seconds then fade out
+                captionTimeout = setTimeout(() => {
+                    captionContainer.style.opacity = '0';
+                }, 3000);
+            }
+        } else {
+            // No caption to show at this time
+            captionText.textContent = '';
+            captionContainer.style.opacity = '0';
+        }
+    }
+    
+    // Set caption language
+    function setCaptionLanguage(language) {
+        currentCaption = language;
+        
+        // Update UI
+        captionOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.caption === language);
+        });
+        mobileCaptionOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.caption === language);
+        });
+        
+        // Update button text/icon
+        if (language === 'off') {
+            captionBtn.innerHTML = '<i class="fas fa-closed-captioning"></i>';
+            mobileCaptionBtn.innerHTML = '<i class="fas fa-closed-captioning"></i>';
+            currentCaptions = [];
+            captionText.textContent = '';
+            captionContainer.style.opacity = '0';
+        } else {
+            captionBtn.innerHTML = `<i class="fas fa-closed-captioning"></i> ${language.charAt(0).toUpperCase() + language.slice(1)}`;
+            mobileCaptionBtn.innerHTML = `<i class="fas fa-closed-captioning"></i> ${language.charAt(0).toUpperCase() + language.slice(1)}`;
+            
+            // Load captions for current movie
+            if (currentMovie && currentMovie.captions && currentMovie.captions[language]) {
+                currentCaptions = currentMovie.captions[language];
+            } else {
+                currentCaptions = [];
+                captionText.textContent = '';
+            }
+        }
+    }
+    
+    // Toggle loop
+    function toggleLoop() {
+        isLooping = !isLooping;
+        videoPlayer.loop = isLooping;
+        
+        // Update UI
+        loopBtn.classList.toggle('active', isLooping);
+        mobileLoopBtn.classList.toggle('active', isLooping);
+        
+        // Show loop status indicator
+        const loopIndicator = document.createElement('div');
+        loopIndicator.className = 'quality-indicator';
+        loopIndicator.textContent = isLooping ? 'Loop: On' : 'Loop: Off';
+        loopIndicator.style.position = 'absolute';
+        loopIndicator.style.top = '10px';
+        loopIndicator.style.left = '10px';
+        loopIndicator.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        loopIndicator.style.color = 'white';
+        loopIndicator.style.padding = '4px 8px';
+        loopIndicator.style.borderRadius = '4px';
+        loopIndicator.style.fontSize = '0.8rem';
+        loopIndicator.style.zIndex = '10';
+        loopIndicator.style.transition = 'opacity 0.3s ease';
+        videoContainer.appendChild(loopIndicator);
+        
+        setTimeout(() => {
+            loopIndicator.style.opacity = '0';
+            setTimeout(() => {
+                if (loopIndicator.parentNode) {
+                    loopIndicator.parentNode.removeChild(loopIndicator);
+                }
+            }, 500);
+        }, 2000);
+    }
+    
+    // Update chapters display
+    function updateChapters(chapters) {
+        chaptersGrid.innerHTML = '';
+        
+        if (!chapters || chapters.length === 0) {
+            chaptersGrid.innerHTML = '<p class="no-chapters">No chapters available for this video.</p>';
+            chapterCount.style.display = 'none';
+            return;
+        }
+        
+        // Update chapter count
+        chapterCount.textContent = `${chapters.length} ${chapters.length === 1 ? 'chapter' : 'chapters'}`;
+        chapterCount.style.display = 'inline-block';
+        
+        // Calculate duration for each chapter
+        const duration = videoPlayer.duration || 596; // Fallback to Big Buck Bunny duration
+        chapters.forEach((chapter, index) => {
+            const nextChapter = chapters[index + 1];
+            const chapterDuration = nextChapter ? nextChapter.time - chapter.time : duration - chapter.time;
+            
+            const chapterCard = document.createElement('div');
+            chapterCard.className = 'chapter-card';
+            chapterCard.innerHTML = `
+                <img src="${chapter.image}" alt="${chapter.title}" onerror="this.src='https://via.placeholder.com/300x169?text=Image+Not+Available'">
+                <div class="chapter-card-overlay">
+                    <div class="chapter-card-content">
+                        <div class="chapter-card-title">${chapter.title}</div>
+                        <div class="chapter-card-time">${formatTime(chapter.time)}</div>
+                        <div class="chapter-card-duration">${formatTime(chapterDuration)}</div>
+                    </div>
+                </div>
+            `;
+            chapterCard.addEventListener('click', () => {
+                videoPlayer.currentTime = chapter.time;
+                videoPlayer.play();
+                updatePlayButtons(true);
+                
+                // Pulse animation for the chapter marker
+                const markers = document.querySelectorAll('.chapter-marker');
+                if (markers[index]) {
+                    markers[index].style.backgroundColor = 'var(--primary-color)';
+                    markers[index].style.transform = 'translateX(-50%) scale(1.3)';
+                    setTimeout(() => {
+                        markers[index].style.backgroundColor = 'white';
+                        markers[index].style.transform = 'translateX(-50%)';
+                    }, 1000);
+                }
+            });
+            chaptersGrid.appendChild(chapterCard);
+        });
+        
+        // Update chapter markers on progress bar
+        updateChapterMarkers(chapters);
+    }
+    
+    // Update chapter markers on progress bar
+    function updateChapterMarkers(chapters) {
+        // Clear existing markers
+        document.querySelectorAll('.chapter-marker').forEach(marker => marker.remove());
+        
+        if (!chapters || chapters.length === 0) return;
+        
+        // Wait for video metadata to be loaded
+        videoPlayer.addEventListener('loadedmetadata', function() {
+            const duration = videoPlayer.duration;
+            
+            chapters.forEach(chapter => {
+                if (chapter.time > 0 && chapter.time < duration) {
+                    const marker = document.createElement('div');
+                    marker.className = 'chapter-marker';
+                    marker.style.left = `${(chapter.time / duration) * 100}%`;
+                    
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'chapter-tooltip';
+                    tooltip.textContent = chapter.title;
+                    marker.appendChild(tooltip);
+                    
+                    marker.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        videoPlayer.currentTime = chapter.time;
+                        videoPlayer.play();
+                        updatePlayButtons(true);
+                        
+                        // Pulse animation
+                        marker.style.backgroundColor = 'var(--primary-color)';
+                        marker.style.transform = 'translateX(-50%) scale(1.3)';
+                        setTimeout(() => {
+                            marker.style.backgroundColor = 'white';
+                            marker.style.transform = 'translateX(-50%)';
+                        }, 1000);
+                    });
+                    
+                    progressContainer.appendChild(marker);
+                }
+            });
+        }, { once: true });
+    }
+    
+    // Update play buttons state
+    function updatePlayButtons(isPlaying) {
+        const icon = isPlaying ? 'fa-pause' : 'fa-play';
+        playBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+        mobilePlayBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+    }
+    
+    // Format time
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+    
+    // Update time display
+    function updateTimeDisplay() {
+        const currentTime = formatTime(videoPlayer.currentTime);
+        const duration = formatTime(videoPlayer.duration);
+        
+        currentTimeEl.textContent = currentTime;
+        durationEl.textContent = duration;
+        mobileCurrentTimeEl.textContent = currentTime;
+        mobileDurationEl.textContent = duration;
+        
+        // Update progress bars
+        const progressPercent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+        mobileProgressBar.style.width = `${progressPercent}%`;
+        
+        // Update captions
+        updateCaptions(videoPlayer.currentTime);
+    }
+    
+    // Play/pause toggle
+    function togglePlay() {
+        if (videoPlayer.paused) {
+            videoPlayer.play();
+            updatePlayButtons(true);
+        } else {
+            videoPlayer.pause();
+            updatePlayButtons(false);
+        }
+    }
+    
+    // Seek function
+    function seekVideo(e) {
+        const width = this.clientWidth;
+        const clickX = e.offsetX;
+        const percent = clickX / width;
+        videoPlayer.currentTime = percent * videoPlayer.duration;
+    }
+    
+    // Toggle sidebar
+    function toggleSidebar() {
+        const isOpening = !sidebar.classList.contains('show');
+        sidebar.classList.toggle('show');
+        sidebarOverlay.classList.toggle('show');
+        
+        if (isOpening) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Show mobile controls
+    function showMobileControls() {
+        if (window.innerWidth >= 768) return;
+        
+        clearTimeout(controlsTimeout);
+        mobileControls.classList.add('visible');
+        controlsVisible = true;
+        
+        // Hide after 3 seconds of inactivity
+        controlsTimeout = setTimeout(() => {
+            hideMobileControls();
+        }, 3000);
+    }
+    
+    // Hide mobile controls
+    function hideMobileControls() {
+        if (window.innerWidth >= 768) return;
+        
+        mobileControls.classList.remove('visible');
+        controlsVisible = false;
+    }
+    
+    // Toggle fullscreen
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            if (playerContainer.requestFullscreen) {
+                playerContainer.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else if (playerContainer.webkitRequestFullscreen) { /* Safari */
+                playerContainer.webkitRequestFullscreen();
+            } else if (playerContainer.msRequestFullscreen) { /* IE11 */
+                playerContainer.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
+    }
+    
+    // Handle fullscreen change
+    function handleFullscreenChange() {
+        if (document.fullscreenElement || 
+            document.webkitFullscreenElement || 
+            document.msFullscreenElement) {
+            playerContainer.classList.add('fullscreen');
+            if (window.innerWidth < 768) {
+                showMobileControls();
+            }
+        } else {
+            playerContainer.classList.remove('fullscreen');
+        }
+    }
+    
+    // Set playback speed
+    function setPlaybackSpeed(speed) {
+        videoPlayer.playbackRate = speed;
+        speedBtn.textContent = `${speed}x`;
+        mobileSpeedBtn.textContent = `${speed}x`;
+        
+        // Update active state
+        speedOptions.forEach(option => {
+            option.classList.toggle('active', parseFloat(option.dataset.speed) === speed);
+        });
+        mobileSpeedOptions.forEach(option => {
+            option.classList.toggle('active', parseFloat(option.dataset.speed) === speed);
+        });
+    }
+    
+    // Working Quality Selector Implementation
+    function setupQualitySelector() {
+        // For demo purposes - in a real app, you would have different quality streams
+        const qualityLevels = {
+            'auto': { label: 'Auto', bitrate: 0 },
+            '144': { label: '144p', bitrate: 150000 },
+            '240': { label: '240p', bitrate: 276000 },
+            '360': { label: '360p', bitrate: 750000 },
+            '480': { label: '480p', bitrate: 1000000 },
+            '720': { label: '720p HD', bitrate: 2500000 },
+            '1080': { label: '1080p FHD', bitrate: 4500000 }
+        };
+
+        // Set initial quality
+        setQuality(currentQuality);
+
+        // Quality option click handlers
+        qualityOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const quality = option.dataset.quality;
+                setQuality(quality);
+                
+                // In a real implementation, you would switch video sources here
+                console.log(`Switching to ${qualityLevels[quality].label} quality`);
+                
+                // For demo purposes, we'll simulate a quality change
+                simulateQualityChange(quality);
+            });
+        });
+
+        // Mobile quality options
+        mobileQualityOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const quality = option.dataset.quality;
+                setQuality(quality);
+                console.log(`Switching to ${qualityLevels[quality].label} quality`);
+                simulateQualityChange(quality);
+            });
+        });
+    }
+
+    function setQuality(quality) {
+        const qualityLevels = {
+            'auto': { label: 'Auto', bitrate: 0 },
+            '144': { label: '144p', bitrate: 150000 },
+            '240': { label: '240p', bitrate: 276000 },
+            '360': { label: '360p', bitrate: 750000 },
+            '480': { label: '480p', bitrate: 1000000 },
+            '720': { label: '720p HD', bitrate: 2500000 },
+            '1080': { label: '1080p FHD', bitrate: 4500000 }
+        };
+
+        qualityBtn.textContent = qualityLevels[quality].label;
+        mobileQualityBtn.textContent = qualityLevels[quality].label;
+        
+        // Update active state
+        qualityOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.quality === quality);
+        });
+        mobileQualityOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.quality === quality);
+        });
+
+        currentQuality = quality;
+    }
+
+    function simulateQualityChange(quality) {
+        // In a real player, you would switch the video source here
+        // For demo purposes, we'll just show a quality indicator
+        
+        // Create or update quality indicator
+        let indicator = document.querySelector('.quality-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'quality-indicator';
+            indicator.style.position = 'absolute';
+            indicator.style.top = '10px';
+            indicator.style.right = '10px';
+            indicator.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            indicator.style.color = 'white';
+            indicator.style.padding = '4px 8px';
+            indicator.style.borderRadius = '4px';
+            indicator.style.fontSize = '0.8rem';
+            indicator.style.zIndex = '10';
+            indicator.style.transition = 'opacity 0.3s ease';
+            videoContainer.appendChild(indicator);
+        }
+        
+        const qualityLevels = {
+            'auto': { label: 'Auto', bitrate: 0 },
+            '144': { label: '144p', bitrate: 150000 },
+            '240': { label: '240p', bitrate: 276000 },
+            '360': { label: '360p', bitrate: 750000 },
+            '480': { label: '480p', bitrate: 1000000 },
+            '720': { label: '720p HD', bitrate: 2500000 },
+            '1080': { label: '1080p FHD', bitrate: 4500000 }
+        };
+        
+        indicator.textContent = qualityLevels[quality].label;
+        indicator.style.opacity = '1';
+        
+        // Hide after 3 seconds
+        clearTimeout(qualityIndicatorTimeout);
+        qualityIndicatorTimeout = setTimeout(() => {
+            indicator.style.opacity = '0';
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 500);
+        }, 3000);
+    }
+    
+    // Initialize volume controls
+    function initVolumeControls() {
+        // Set initial volume
+        videoPlayer.volume = volumeSlider.value;
+        videoPlayer.volume = mobileVolumeSlider.value;
+        updateVolumeSliders();
+        
+        // Desktop volume control
+        volumeBtn.addEventListener('click', () => {
+            if (videoPlayer.volume > 0) {
+                videoPlayer.volume = 0;
+                volumeSlider.value = 0;
+                volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else {
+                videoPlayer.volume = 1;
+                volumeSlider.value = 1;
+                volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+        });
+        
+        volumeSlider.addEventListener('input', () => {
+            videoPlayer.volume = volumeSlider.value;
+            mobileVolumeSlider.value = volumeSlider.value;
+            updateVolumeSliders();
+        });
+        
+        // Mobile volume control
+        mobileVolumeBtn.addEventListener('click', () => {
+            if (videoPlayer.volume > 0) {
+                videoPlayer.volume = 0;
+                mobileVolumeSlider.value = 0;
+                mobileVolumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else {
+                videoPlayer.volume = 1;
+                mobileVolumeSlider.value = 1;
+                mobileVolumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+        });
+        
+        mobileVolumeSlider.addEventListener('input', () => {
+            videoPlayer.volume = mobileVolumeSlider.value;
+            volumeSlider.value = mobileVolumeSlider.value;
+            updateVolumeSliders();
+        });
+
+        // Show volume slider on mobile when button clicked
+        mobileVolumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const slider = document.getElementById('mobileVolumeSliderContainer');
+            slider.style.display = slider.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Hide volume slider when clicking elsewhere
+        document.addEventListener('click', () => {
+            document.getElementById('mobileVolumeSliderContainer').style.display = 'none';
+        });
+    }
+    
+    // Update volume sliders and buttons
+    function updateVolumeSliders() {
+        volumeSlider.value = videoPlayer.volume;
+        mobileVolumeSlider.value = videoPlayer.volume;
+        if (videoPlayer.volume == 0) {
+            volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            mobileVolumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        } else {
+            volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            mobileVolumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
+    }
+    
+    // Keyboard controls
+    document.addEventListener('keydown', function(e) {
+        if (!videoPlayer) return;
+        
+        switch(e.key) {
+            case ' ':
+            case 'k':
+                e.preventDefault();
+                togglePlay();
+                break;
+            case 'm':
+                e.preventDefault();
+                videoPlayer.muted = !videoPlayer.muted;
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                videoPlayer.currentTime = Math.max(0, videoPlayer.currentTime - 5);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                videoPlayer.currentTime = Math.min(videoPlayer.duration, videoPlayer.currentTime + 5);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1);
+                updateVolumeSliders();
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1);
+                updateVolumeSliders();
+                break;
+            case 'f':
+            case 'F':
+                e.preventDefault();
+                toggleFullscreen();
+                break;
+            case 'l':
+            case 'L':
+                e.preventDefault();
+                toggleLoop();
+                break;
+            case 'c':
+            case 'C':
+                e.preventDefault();
+                // Toggle captions
+                const newCaption = currentCaption === 'off' ? 'english' : 'off';
+                setCaptionLanguage(newCaption);
+                break;
+        }
+    });
+    
+    // Initialize
+    initializeMovieGrid();
+    initializeTrendingGrid();
+    loadMovie(forYouMovies[0]);
+    initVolumeControls();
+    setupQualitySelector();
+    
+    // Event listeners
+    playBtn.addEventListener('click', togglePlay);
+    mobilePlayBtn.addEventListener('click', togglePlay);
+    
+    // Tap to show/hide controls on mobile
+    videoContainer.addEventListener('click', function() {
+        if (window.innerWidth < 768) {
+            if (controlsVisible) {
+                hideMobileControls();
+            } else {
+                showMobileControls();
+            }
+        } else {
+            togglePlay();
+        }
+    });
+    
+    // Keep controls visible when interacting with them
+    mobileControls.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showMobileControls();
+    });
+    
+    videoPlaceholder.addEventListener('click', () => {
+        videoPlayer.play().catch(e => console.error('Autoplay prevented:', e));
+        videoPlayer.style.display = 'block';
+        videoPlaceholder.style.display = 'none';
+        updatePlayButtons(true);
+        if (window.innerWidth < 768) {
+            showMobileControls();
+        }
+    });
+    
+    progressContainer.addEventListener('click', seekVideo);
+    mobileProgressContainer.addEventListener('click', seekVideo);
+    
+    videoPlayer.addEventListener('timeupdate', updateTimeDisplay);
+    videoPlayer.addEventListener('ended', () => {
+        updatePlayButtons(false);
+        if (isLooping) {
+            videoPlayer.currentTime = 0;
+            videoPlayer.play();
+            updatePlayButtons(true);
+        }
+    });
+    videoPlayer.addEventListener('play', () => updatePlayButtons(true));
+    videoPlayer.addEventListener('pause', () => updatePlayButtons(false));
+    videoPlayer.addEventListener('volumechange', updateVolumeSliders);
+    
+    // Speed options
+    speedOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            setPlaybackSpeed(parseFloat(option.dataset.speed));
+        });
+    });
+    
+    mobileSpeedOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            setPlaybackSpeed(parseFloat(option.dataset.speed));
+        });
+    });
+    
+    // Caption options
+    captionOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            setCaptionLanguage(option.dataset.caption);
+        });
+    });
+    
+    mobileCaptionOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            setCaptionLanguage(option.dataset.caption);
+        });
+    });
+    
+    // Loop button
+    loopBtn.addEventListener('click', toggleLoop);
+    mobileLoopBtn.addEventListener('click', toggleLoop);
+    
+    // Quality options
+    qualityOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const quality = option.dataset.quality;
+            setQuality(quality);
+            console.log(`Switching to ${quality} quality`);
+            simulateQualityChange(quality);
+        });
+    });
+    
+    mobileQualityOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const quality = option.dataset.quality;
+            setQuality(quality);
+            console.log(`Switching to ${quality} quality`);
+            simulateQualityChange(quality);
+        });
+    });
+    
+    sidebarToggle.addEventListener('click', toggleSidebar);
+    closeSidebar.addEventListener('click', toggleSidebar);
+    
+    // Handle overlay click
+    sidebarOverlay.addEventListener('click', function(e) {
+        if (e.target === sidebarOverlay) {
+            toggleSidebar();
+        }
+    });
+    
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    mobileFullscreenBtn.addEventListener('click', toggleFullscreen);
+    
+    // Handle fullscreen change events
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+    
+    // Handle orientation changes
+    window.addEventListener('orientationchange', function() {
+        // Force redraw of controls
+        setTimeout(() => {
+            if (window.innerWidth < 768 && window.matchMedia("(orientation: portrait)").matches) {
+                document.getElementById('mobileControls').classList.add('visible');
+            } else {
+                document.getElementById('mobileControls').classList.remove('visible');
+            }
+        }, 100);
+    });
+
+    // Mobile speed selector
+        document.getElementById('mobileSpeedBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const speedSelector = this.closest('.speed-selector');
+            document.querySelectorAll('.speed-selector, .quality-selector, .caption-selector').forEach(el => {
+                if (el !== speedSelector) el.classList.remove('active');
+            });
+            speedSelector.classList.toggle('active');
+        });
+
+        // Mobile quality selector
+        document.getElementById('mobileQualityBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const qualitySelector = this.closest('.quality-selector');
+            document.querySelectorAll('.speed-selector, .quality-selector, .caption-selector').forEach(el => {
+                if (el !== qualitySelector) el.classList.remove('active');
+            });
+            qualitySelector.classList.toggle('active');
+        });
+
+        // Mobile caption selector
+        document.getElementById('mobileCaptionBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const captionSelector = this.closest('.caption-selector');
+            document.querySelectorAll('.speed-selector, .quality-selector, .caption-selector').forEach(el => {
+                if (el !== captionSelector) el.classList.remove('active');
+            });
+            captionSelector.classList.toggle('active');
+        });
+
+        // Close dropdowns when clicking elsewhere
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.speed-selector, .quality-selector, .caption-selector').forEach(el => {
+                el.classList.remove('active');
+            });
+        });
+
+        // Prevent dropdowns from closing when clicking inside them
+        document.querySelectorAll('.speed-options, .quality-options, .caption-options').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+});
+    </script>
+</body>
+</html>
